@@ -20,14 +20,24 @@ listSize :: (Sized a, Monoid a) => JoinList a b -> Int
 listSize = uSize . tag
 
 indexJ :: (Sized b, Monoid b) => Int -> JoinList b a -> Maybe a
-indexJ i Empty = Nothing
-indexJ i (Single s v)
+indexJ _ Empty = Nothing
+indexJ i (Single _ v)
   | i == 0    = Just v
   | otherwise = Nothing
 indexJ i (Append s l1 l2)
   | i < (listSize l1) = indexJ i l1
   | i < (listSize l1) + (listSize l2) = indexJ (i - (listSize l1)) l2
   | otherwise = Nothing
+
+dropJ :: (Sized b, Monoid b) => Int -> JoinList b a -> JoinList b a
+dropJ _ Empty = Empty
+dropJ i l@(Single _ _)
+  | i >= 1    = Empty
+  | otherwise = l
+dropJ i (Append s l1 l2)
+  | i > uSize s     = Empty
+  | i > listSize l1 = dropJ (i - listSize l1) l2
+  | otherwise       = Append (Size (uSize s - i)) (dropJ i l1) l2
 
 indexToList :: JoinList b a -> [a]
 indexToList Empty = []
